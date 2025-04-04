@@ -1,0 +1,9 @@
+﻿@model List<AppRole>
+
+<label for="role" class="form-label">Select Role</label>
+                                <select class="form-select" id="Listrole" required>
+    @foreach (var i in Model)
+    {
+                                            <option value="@i.Id">@i.Name</option>
+    }                                    
+                                </select>

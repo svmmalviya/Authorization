@@ -1,0 +1,80 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Newtonsoft.Json
+@model LoginViewModel
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    ViewData["Title"] = "Register";
+    var roles = HttpContextAccessor.HttpContext.Session.GetString("roles");
+
+    var approle = new List<AppRole>();
+
+    if (roles != null)
+    {
+        approle=JsonConvert.DeserializeObject<List<AppRole>>(roles);
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Register</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h4>Register</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="registerForm" asp-action="RegisterMe" method="post">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="@Model.Username" name="username" placeholder="Enter your full name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Enter your password" required>
+                            </div>
+                            <div class="mb-3">
+                               <partial name="roleList" model="approle" />
+                               <input type="hidden" id="Role"name="Role" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" name="Password" id="@Model.Password" placeholder="Enter password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Register</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+             $(document).ready(function () {
+            $("#Listrole").change(function () {
+                var selectedRoleId = $("#Listrole").val();
+
+                if (selectedRoleId) {
+                    $("#Role").val(selectedRoleId);
+                } else {
+                    alert("Please select a role.");
+                }
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

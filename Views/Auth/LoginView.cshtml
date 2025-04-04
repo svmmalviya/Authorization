@@ -1,0 +1,69 @@
+﻿@using Authorization.Controllers
+@model LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form id="loginForm" method="post">
+    @Html.AntiForgeryToken()
+    <div class="form-group">
+        <label for="Username">Username</label>
+        <input type="text" id="Username" name="Username" class="form-control" required />
+    </div>
+    <div class="form-group">
+        <label for="Password">Password</label>
+        <input type="password" id="Password" name="Password" class="form-control" required />
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Login</button>
+    </div>
+</form>
+<a asp-action="Register" asp-controller="Auth" >Register</a>
+
+<div id="errorMessage" style="color:red; display:none;">
+    Invalid username or password.
+</div>
+
+<script>
+    document.getElementById("loginForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        // Gather username and password from form
+        var username = document.getElementById("Username").value;
+        var password = document.getElementById("Password").value;
+
+        // Send POST request to the login action in the controller
+        fetch('/Auth/Login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                Username: username,
+                Password: password
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json(); // The token will be returned in the body
+            }
+            throw new Error('Invalid credentials');
+        })
+        .then(data => {
+            // Store the token in localStorage or sessionStorage
+            localStorage.setItem('authToken', data);
+            // headers: {
+            //     'Authorization': 'Bearer ' + data
+            // }
+            // Redirect user to another page (for example: Dashboard)
+            window.location.href = '/Auth/Home';
+        })
+        .catch(error => {
+            // Handle invalid login
+            document.getElementById('errorMessage').style.display = 'block';
+        });
+    });
+</script>
