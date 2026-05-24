@@ -9,10 +9,7 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
-  # Azure DevOps Service Connection
   azureSubscription: 'Azure subscription 1(c43a497b-cb7e-4545-b2ea-54ed178a58d6)'
-
-  # Azure App Service Name
   webAppName: 'ocsAuth'
 
 stages:
@@ -32,13 +29,13 @@ stages:
     # Install NuGet
     - task: NuGetToolInstaller@1
 
-    # Restore NuGet Packages
+    # Restore Packages
     - task: NuGetCommand@2
       displayName: Restore Packages
       inputs:
         restoreSolution: '$(solution)'
 
-    # Build Solution and Create ZIP Package
+    # Build and Publish Website
     - task: VSBuild@1
       displayName: Build Solution
       inputs:
@@ -47,11 +44,9 @@ stages:
         configuration: '$(buildConfiguration)'
         msbuildArgs: >
           /p:DeployOnBuild=true
-          /p:WebPublishMethod=Package
-          /p:PackageAsSingleFile=true
-          /p:SkipInvalidConfigurations=true
-          /p:DesktopBuildPackageLocation="$(Build.ArtifactStagingDirectory)\WebApp.zip"
-          /p:DeployIisAppPath="Default Web Site"
+          /p:WebPublishMethod=FileSystem
+          /p:DeleteExistingFiles=true
+          /p:publishUrl="$(Build.ArtifactStagingDirectory)\publish"
 
     # Run Tests
     - task: VSTest@2
@@ -60,7 +55,17 @@ stages:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
 
-    # Publish Build Artifacts
+    # Archive Published Files
+    - task: ArchiveFiles@2
+      displayName: Create Deployment ZIP
+      inputs:
+        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\publish'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)\WebApp.zip'
+        replaceExistingArchive: true
+
+    # Publish Artifacts
     - task: PublishBuildArtifacts@1
       displayName: Publish Build Artifacts
       inputs:
@@ -87,7 +92,7 @@ stages:
 
           steps:
 
-          # Download Build Artifact
+          # Download Artifact
           - download: current
             artifact: drop
 
