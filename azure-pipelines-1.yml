@@ -1,0 +1,92 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  azureSubscription: 'Azure-Service-Connection'
+  webAppName: 'your-app-service-name'
+
+stages:
+
+# =====================================
+# BUILD STAGE
+# =====================================
+- stage: Build
+  displayName: Build Stage
+
+  jobs:
+  - job: Build
+    displayName: Build and Publish
+
+    steps:
+
+    - task: NuGetToolInstaller@1
+
+    - task: NuGetCommand@2
+      displayName: Restore NuGet Packages
+      inputs:
+        restoreSolution: '$(solution)'
+
+    - task: VSBuild@1
+      displayName: Build Solution
+      inputs:
+        solution: '$(solution)'
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+        msbuildArgs: >
+          /p:DeployOnBuild=true
+          /p:WebPublishMethod=Package
+          /p:PackageAsSingleFile=true
+          /p:SkipInvalidConfigurations=true
+          /p:PackageLocation="$(Build.ArtifactStagingDirectory)"
+
+    - task: VSTest@2
+      displayName: Run Tests
+      inputs:
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+
+    # Publish build artifacts
+    - task: PublishBuildArtifacts@1
+      displayName: Publish Artifacts
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+
+# =====================================
+# DEPLOY STAGE
+# =====================================
+- stage: Deploy
+  displayName: Deploy to Azure
+  dependsOn: Build
+
+  jobs:
+  - deployment: DeployWeb
+    displayName: Deploy Azure Web App
+
+    environment: 'Production'
+
+    strategy:
+      runOnce:
+        deploy:
+
+          steps:
+
+          # Download artifacts
+          - download: current
+            artifact: drop
+
+          # Deploy to Azure App Service
+          - task: AzureWebApp@1
+            displayName: Deploy to Azure App Service
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: '$(webAppName)'
+              package: '$(Pipeline.Workspace)/drop/**/*.zip'
