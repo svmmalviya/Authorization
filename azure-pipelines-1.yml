@@ -8,27 +8,28 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
-  azureSubscription: 'Azure-Service-Connection'
-  webAppName: 'your-app-service-name'
+
+  azureSubscription: 'Azure subscription 1(c43a497b-cb7e-4545-b2ea-54ed178a58d6)'
+  webAppName: 'ocsAuth'
 
 stages:
 
-# =====================================
+# ==========================================
 # BUILD STAGE
-# =====================================
+# ==========================================
 - stage: Build
-  displayName: Build Stage
+  displayName: Build Application
 
   jobs:
   - job: Build
-    displayName: Build and Publish
+    displayName: Restore Build Test Publish
 
     steps:
 
     - task: NuGetToolInstaller@1
 
     - task: NuGetCommand@2
-      displayName: Restore NuGet Packages
+      displayName: Restore Packages
       inputs:
         restoreSolution: '$(solution)'
 
@@ -51,24 +52,23 @@ stages:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
 
-    # Publish build artifacts
     - task: PublishBuildArtifacts@1
-      displayName: Publish Artifacts
+      displayName: Publish Build Artifacts
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
         publishLocation: 'Container'
 
-# =====================================
+# ==========================================
 # DEPLOY STAGE
-# =====================================
+# ==========================================
 - stage: Deploy
   displayName: Deploy to Azure
   dependsOn: Build
 
   jobs:
-  - deployment: DeployWeb
-    displayName: Deploy Azure Web App
+  - deployment: DeployWebApp
+    displayName: Deploy to Azure App Service
 
     environment: 'Production'
 
@@ -78,13 +78,11 @@ stages:
 
           steps:
 
-          # Download artifacts
           - download: current
             artifact: drop
 
-          # Deploy to Azure App Service
           - task: AzureWebApp@1
-            displayName: Deploy to Azure App Service
+            displayName: Deploy to Azure Web App
             inputs:
               azureSubscription: '$(azureSubscription)'
               appType: 'webApp'
