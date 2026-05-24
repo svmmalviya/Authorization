@@ -9,14 +9,17 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
+  # Azure DevOps Service Connection
   azureSubscription: 'Azure subscription 1(c43a497b-cb7e-4545-b2ea-54ed178a58d6)'
+
+  # Azure App Service Name
   webAppName: 'ocsAuth'
 
 stages:
 
-# ==========================================
+# ======================================================
 # BUILD STAGE
-# ==========================================
+# ======================================================
 - stage: Build
   displayName: Build Application
 
@@ -26,13 +29,16 @@ stages:
 
     steps:
 
+    # Install NuGet
     - task: NuGetToolInstaller@1
 
+    # Restore NuGet Packages
     - task: NuGetCommand@2
       displayName: Restore Packages
       inputs:
         restoreSolution: '$(solution)'
 
+    # Build Solution and Create ZIP Package
     - task: VSBuild@1
       displayName: Build Solution
       inputs:
@@ -44,14 +50,17 @@ stages:
           /p:WebPublishMethod=Package
           /p:PackageAsSingleFile=true
           /p:SkipInvalidConfigurations=true
-          /p:PackageLocation="$(Build.ArtifactStagingDirectory)"
+          /p:DesktopBuildPackageLocation="$(Build.ArtifactStagingDirectory)\WebApp.zip"
+          /p:DeployIisAppPath="Default Web Site"
 
+    # Run Tests
     - task: VSTest@2
       displayName: Run Tests
       inputs:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
 
+    # Publish Build Artifacts
     - task: PublishBuildArtifacts@1
       displayName: Publish Build Artifacts
       inputs:
@@ -59,9 +68,9 @@ stages:
         ArtifactName: 'drop'
         publishLocation: 'Container'
 
-# ==========================================
+# ======================================================
 # DEPLOY STAGE
-# ==========================================
+# ======================================================
 - stage: Deploy
   displayName: Deploy to Azure
   dependsOn: Build
@@ -78,13 +87,15 @@ stages:
 
           steps:
 
+          # Download Build Artifact
           - download: current
             artifact: drop
 
+          # Deploy to Azure App Service
           - task: AzureWebApp@1
             displayName: Deploy to Azure Web App
             inputs:
               azureSubscription: '$(azureSubscription)'
               appType: 'webApp'
               appName: '$(webAppName)'
-              package: '$(Pipeline.Workspace)/drop/**/*.zip'
+              package: '$(Pipeline.Workspace)/drop/WebApp.zip'
