@@ -10,7 +10,7 @@ variables:
   buildConfiguration: 'Release'
 
   azureSubscription: 'Azure subscription 1(c43a497b-cb7e-4545-b2ea-54ed178a58d6)'
-  webAppName: 'ocsAuth'
+  webAppName: 'ocsinventory'
 
 stages:
 
@@ -96,11 +96,14 @@ stages:
           - download: current
             artifact: drop
 
-          # Deploy to Azure App Service
+         # Deploy to Azure App Service Slot
           - task: AzureWebApp@1
-            displayName: Deploy to Azure Web App
+            displayName: Deploy to Azure Web App Staging Slot
             inputs:
               azureSubscription: '$(azureSubscription)'
               appType: 'webApp'
               appName: '$(webAppName)'
+              deployToSlotOrASE: true
+              resourceGroupName: 'ocsauth_group'
+              slotName: 'staging'
               package: '$(Pipeline.Workspace)/drop/WebApp.zip'
